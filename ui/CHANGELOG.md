@@ -1,5 +1,13 @@
 # @platforma-open/milaboratories.sequence-embeddings.ui
 
+## 1.2.3
+
+### Patch Changes
+
+- 7305e43: Recognize synthetic-repertoire-profiler variant sequences: the peptide-family sequence selector now also matches `pl7.app/sequence` columns with the `amplicon-sequence` feature (in addition to `peptide`), so profiler outputs become embeddable via the peptide scope.
+- Updated dependencies [7305e43]
+  - @platforma-open/milaboratories.sequence-embeddings.model@1.2.3
+
 ## 1.2.2
 
 ### Patch Changes
