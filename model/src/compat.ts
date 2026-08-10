@@ -15,7 +15,13 @@
  * only offered once it is **fully wired end-to-end** (weight asset packaged +
  * workflow routing); see `ENABLED_MODELS`.
  */
-import type { EmbeddingModelId, ModelTag, ScopeFeature, WorkflowReceptor } from "./types";
+import type {
+  EmbeddingModelId,
+  ModelTag,
+  ScopeFeature,
+  ScopeReceptor,
+  WorkflowReceptor,
+} from "./types";
 
 export type EmbeddingModelSpec = {
   id: EmbeddingModelId;
@@ -147,7 +153,7 @@ export function modelTagLabel(tag: string): string {
 /** Context the recommendation needs beyond the scope itself, derived from the
  *  full set of available scopes for the connected input. */
 export type ScopeContext = {
-  receptor: WorkflowReceptor;
+  receptor: ScopeReceptor;
   /** True when the IG input is conventional paired antibody (light chain or Fv
    *  present) rather than a heavy-only (nanobody-like) dataset. Drives the
    *  VHHBERT-vs-CurrAb default. */
@@ -159,10 +165,17 @@ function modelSupports(
   spec: EmbeddingModelSpec,
   feature: ScopeFeature,
   isHeavy: boolean,
-  receptor: WorkflowReceptor,
+  receptor: ScopeReceptor,
 ): boolean {
   if (!ENABLED_MODELS.has(spec.id)) return false;
   if (!spec.features.includes(feature)) return false;
+  // An "unknown" receptor means the producer declared VDJ data but supplied no
+  // receptor and no chain (synthetic-repertoire-profiler — see ScopeReceptor).
+  // Filtering on metadata nobody supplied is what excluded every TCR specialist
+  // from DMS VDJ input, so both VDJ gates below are skipped in that case: the user
+  // is offered the full VDJ catalogue and picks the model that fits their data.
+  // The trade is deliberate — the dropdown can offer a TCR model for antibody data.
+  if (receptor === "unknown") return true;
   // Peptide inputs carry no receptor — gate on receptor only for VDJ features.
   if (feature !== "peptide" && !spec.receptors.includes(receptor)) return false;
   if (spec.heavyOnly && !isHeavy) return false;
@@ -174,7 +187,7 @@ function modelSupports(
 export function compatibleModels(
   feature: ScopeFeature,
   isHeavy: boolean,
-  receptor: WorkflowReceptor,
+  receptor: ScopeReceptor,
 ): EmbeddingModelId[] {
   return (Object.keys(EMBEDDING_MODELS) as EmbeddingModelId[])
     .filter((id) => modelSupports(EMBEDDING_MODELS[id], feature, isHeavy, receptor))
@@ -185,7 +198,7 @@ export function compatibleModels(
 export function isCompatible(
   feature: ScopeFeature,
   isHeavy: boolean,
-  receptor: WorkflowReceptor,
+  receptor: ScopeReceptor,
   model: EmbeddingModelId,
 ): boolean {
   return modelSupports(EMBEDDING_MODELS[model], feature, isHeavy, receptor);
@@ -202,6 +215,13 @@ export function recommendedModel(
   ctx: ScopeContext,
 ): EmbeddingModelId {
   const compatible = compatibleModels(feature, isHeavy, ctx.receptor);
+  // Unknown receptor: the whole catalogue is offered, but specialist-first would
+  // silently pick a receptor-specific model (CurrAb, the highest priority) for data
+  // whose receptor nobody declared — an antibody model on a TCR library. Default to
+  // the universal model instead and let the user choose a specialist deliberately.
+  if (ctx.receptor === "unknown") {
+    return compatible.includes("esm2") ? "esm2" : (compatible[0] ?? "esm2");
+  }
   if (
     feature === "VDJRegion" &&
     ctx.receptor === "IG" &&

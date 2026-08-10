@@ -4,6 +4,23 @@ import type { PlRef, SUniversalPColumnId } from "@platforma-sdk/model";
 export type WorkflowReceptor = "IG" | "TCRAB" | "TCRGD";
 
 /**
+ * A scope's receptor, or `"unknown"` when the producer declares VDJ data but no
+ * receptor at all.
+ *
+ * `synthetic-repertoire-profiler` is the case: it declares `pl7.app/modality: vdj`
+ * but emits neither `pl7.app/vdj/receptor` nor `pl7.app/vdj/chain` — germline
+ * auto-detection builds a custom reference from the user's own parent sequences, so
+ * there is no library locus to read a receptor from. Guessing `IG` there would
+ * silently exclude the TCR specialists from a TCR dataset, so the unknown is carried
+ * explicitly and `compat.ts` relaxes receptor/chain gating rather than filtering on
+ * a value nobody supplied.
+ *
+ * Widening only — every previously persisted `WorkflowReceptor` stays valid, so
+ * snapshotted scopes in existing projects deserialize unchanged.
+ */
+export type ScopeReceptor = WorkflowReceptor | "unknown";
+
+/**
  * ESM-2 fidelity the user picks per card, projected into args. Default is `standard`.
  * `standard` → ESM-2 150M; `high` → ESM-2 650M. Only meaningful when the card's
  * model is ESM-2; ignored for the single-checkpoint specialists.
@@ -64,11 +81,16 @@ export type SelectedScope = {
    * True when this is an IG heavy chain (single-cell chain `A`, or bulk
    * `IGHeavy`). Gates the heavy-only specialists (VHHBERT, H3BERTa) and the
    * VHH-vs-mAb default. Snapshotted so the args lambda stays `data`-only.
+   *
+   * Always `false` when `receptor` is `"unknown"` — a producer that supplies no
+   * receptor supplies no chain either, so this carries no information there and
+   * `compat.ts` does not gate on it.
    */
   isHeavy: boolean;
   /** Receptor of the input this scope came from, snapshotted for `data`-only
-   *  compatibility validation in the args lambda. */
-  receptor: WorkflowReceptor;
+   *  compatibility validation in the args lambda. `"unknown"` when the producer
+   *  declares VDJ data without a receptor — see `ScopeReceptor`. */
+  receptor: ScopeReceptor;
 };
 
 /** A selectable scope. Alias of `SelectedScope` — the label lives on the base type. */
@@ -101,8 +123,9 @@ export type ScopeConfig = {
    * previous input is never applied to the newly selected one.
    */
   forAnchor: string;
-  /** Input receptor — feeds the UI's model-compatibility filtering (`compat.ts`). */
-  receptor: WorkflowReceptor;
+  /** Input receptor — feeds the UI's model-compatibility filtering (`compat.ts`).
+   *  `"unknown"` relaxes that filtering; see `ScopeReceptor`. */
+  receptor: ScopeReceptor;
   /**
    * True when the IG input is conventional paired antibody (a light chain or Fv
    * is present), false for a heavy-only (nanobody-like) dataset. Drives the
