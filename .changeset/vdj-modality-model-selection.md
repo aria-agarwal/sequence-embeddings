@@ -1,6 +1,6 @@
 ---
-'@platforma-open/milaboratories.sequence-embeddings.model': minor
-'@platforma-open/milaboratories.sequence-embeddings': minor
+'@platforma-open/milaboratories.sequence-embeddings.model': patch
+'@platforma-open/milaboratories.sequence-embeddings': patch
 ---
 
 Offer antibody and TCR models for VDJ amplicon-profiling input (MILAB-6668).

@@ -1,5 +1,6 @@
 import type { InferOutputsType } from "@platforma-sdk/model";
 import { BlockModelV3, PColumnCollection } from "@platforma-sdk/model";
+import { kind } from "@platforma-open/milaboratories.sequence-embeddings.kind";
 import { EMBEDDING_MODELS, isCompatible } from "./compat";
 import { blockDataModel } from "./dataModel";
 import { buildScopeConfig, isVdjModality, resolveReceptor, SEQUENCE_SELECTORS } from "./scopes";
@@ -61,7 +62,7 @@ const inputAnchorSpecs = [
   },
 ];
 
-export const platforma = BlockModelV3.create(blockDataModel)
+export const platforma = BlockModelV3.create({ dataModel: blockDataModel, kind })
   .args<BlockArgs>((data) => {
     if (data.inputAnchor === undefined) {
       throw new Error("Select an input dataset");
@@ -95,6 +96,13 @@ export const platforma = BlockModelV3.create(blockDataModel)
   // Prerun feeds a lightweight always-rerun template that reports whether the
   // backend advertises a GPU
   .prerunArgs(() => ({}))
+  // The inverse of `init`: the two fields a template seeds are projected back out
+  // unchanged. Live state travels as-is — a half-picked selection is ordinary
+  // state, and the kind's parser accepts it.
+  .templateParams((data) => ({
+    inputAnchor: data.inputAnchor,
+    embedding: data.embedding,
+  }))
   // Dropdown source for the input picker. Refs returned here populate the UI
   // selector; the user's pick is written back into `data.inputAnchor`.
   .output("inputOptions", (ctx) => ctx.resultPool.getOptions(inputAnchorSpecs))

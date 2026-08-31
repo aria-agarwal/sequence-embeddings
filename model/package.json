@@ -22,6 +22,7 @@
     "check": "ts-builder check --target block-model"
   },
   "dependencies": {
+    "@platforma-open/milaboratories.sequence-embeddings.kind": "workspace:*",
     "@platforma-sdk/model": "catalog:"
   },
   "devDependencies": {

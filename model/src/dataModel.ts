@@ -1,3 +1,4 @@
+import { kind } from "@platforma-open/milaboratories.sequence-embeddings.kind";
 import { DataModelBuilder } from "@platforma-sdk/model";
 import type { BlockDataV1, BlockDataV2, BlockDataV3, EmbeddingCardV2 } from "./types";
 
@@ -45,14 +46,18 @@ function migrateV2ToV3(v2: BlockDataV2): BlockDataV3 {
   };
 }
 
-export const blockDataModel = new DataModelBuilder()
+export const blockDataModel = new DataModelBuilder({ kind })
   .from<BlockDataV1>("Ver_2026_05_29")
   .migrate<BlockDataV2>("Ver_2026_06_23_models", migrateV1ToV2)
   .migrate<BlockDataV3>("Ver_2026_07_03_single_selection", migrateV2ToV3)
-  .init(() => ({
+  // `params` carries the kind's init-params contract, and is undefined when the
+  // block is created outside a template. Both fields it can carry keep a default
+  // behind them, so a block created without params starts exactly as before.
+  .init(({ params }) => ({
+    inputAnchor: params?.inputAnchor,
     // The selection is seeded by the UI on first input connection (specialist-first);
     // starts blank so the dropdowns have an object to bind to before an input exists.
-    embedding: {},
+    embedding: params?.embedding ?? {},
     // mem/cpu are intentionally left UNSET: the workflow sizes the embedding step's
     // resources automatically from device (CPU/GPU) and input volume. They become
     // opt-in overrides — set only when the user fills them in Advanced Settings.
