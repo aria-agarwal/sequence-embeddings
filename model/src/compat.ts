@@ -35,6 +35,11 @@ export type EmbeddingModelSpec = {
   /** Heavy-chain-only specialist (VHHBERT, H3BERTa): only embeds IG heavy scopes
    *  (`SelectedScope.isHeavy`). Omitted/false = any chain. */
   heavyOnly?: boolean;
+  /**
+   * The model encodes a chain by SLOT, so it cannot be run without knowing whether
+   * the scope is heavy or light (AbLang2)
+   */
+  requiresChainRole?: boolean;
   /** Default-selection priority among compatible models (higher wins). ESM-2 is
    *  0 so any specialist beats it; the VHH-vs-mAb tiebreak is applied in
    *  `recommendedModel`, not via priority. */
@@ -83,6 +88,7 @@ export const EMBEDDING_MODELS: Record<EmbeddingModelId, EmbeddingModelSpec> = {
     label: "AbLang2 (antibody)",
     receptors: ["IG"],
     features: ["VDJRegion", "Fv"],
+    requiresChainRole: true,
     priority: 40,
   },
   vhhbert: {
@@ -173,9 +179,13 @@ function modelSupports(
   // receptor and no chain (synthetic-repertoire-profiler — see ScopeReceptor).
   // Filtering on metadata nobody supplied is what excluded every TCR specialist
   // from DMS VDJ input, so both VDJ gates below are skipped in that case: the user
-  // is offered the full VDJ catalogue and picks the model that fits their data.
-  // The trade is deliberate — the dropdown can offer a TCR model for antibody data.
-  if (receptor === "unknown") return true;
+  // is offered the VDJ catalogue and picks the model that fits their data.
+  // The trade is deliberate — the dropdown can offer a TCR model for antibody data,
+  // because picking the wrong specialist is a visible choice the user can correct.
+  // The one exception is a model that encodes the chain by slot: with the chain role
+  // unknown there is no choice to make, only a coin flip whose wrong side is a
+  // silently mis-encoded vector. Those are withheld — see `requiresChainRole`.
+  if (receptor === "unknown") return !spec.requiresChainRole;
   // Peptide inputs carry no receptor — gate on receptor only for VDJ features.
   if (feature !== "peptide" && !spec.receptors.includes(receptor)) return false;
   if (spec.heavyOnly && !isHeavy) return false;
