@@ -26,7 +26,20 @@ import type {
   PColumnSpec,
   SUniversalPColumnId,
 } from "@platforma-sdk/model";
-import type { AvailableScope, ScopeConfig, SelectedScope, WorkflowReceptor } from "./types";
+import type {
+  AvailableScope,
+  ScopeConfig,
+  ScopeReceptor,
+  SelectedScope,
+  WorkflowReceptor,
+} from "./types";
+
+/**
+ * Run modality declared by the producer on the entity axis (`pl7.app/modality`).
+ * `"vdj"` means the variants are antibody/TCR V-domains; anything else (including
+ * absent) is treated as the general amplicon/peptide case.
+ */
+export const MODALITY_DOMAIN_KEY = "pl7.app/modality";
 
 /** A discovered sequence column: its workflow-resolvable id, spec, and the
  *  label derived for it (native label forced via includeNativeLabel upstream). */
@@ -52,8 +65,18 @@ export const SEQUENCE_SELECTORS: AnchoredPColumnSelector[] = [
     name: "pl7.app/sequence",
     // synthetic-repertoire-profiler tags its whole-variant AA sequence with the
     // generic `amplicon-sequence` feature (shared with other consumers), not
-    // `peptide`; treat it as a peptide-family scope so it becomes embeddable.
+    // `peptide`. On an amplicon run it is a peptide-family scope; on a VDJ run the
+    // same column is the V-domain and maps to `VDJRegion` — see `buildScopeConfig`.
     domain: { "pl7.app/feature": "amplicon-sequence", "pl7.app/alphabet": "aminoacid" },
+  },
+  {
+    axes: [{ anchor: "main", idx: 1 }],
+    name: "pl7.app/sequence",
+    // synthetic-repertoire-profiler region subsequence, keyed by region name in
+    // `pl7.app/feature` (FR1…FR4, CDR1…CDR3) rather than on `pl7.app/vdj/sequence`.
+    // CDR3 is the only one that is a scope in its own right, so it is the only one
+    // selected for; it is classified only on a VDJ run (`buildScopeConfig`).
+    domain: { "pl7.app/feature": "CDR3", "pl7.app/alphabet": "aminoacid" },
   },
   {
     axes: [{ anchor: "main", idx: 1 }],
@@ -79,15 +102,27 @@ const CHAIN_TO_RECEPTOR: Record<string, WorkflowReceptor> = {
   TCRDelta: "TCRGD",
 };
 
+/** True when the producer declared this run's modality as antibody/TCR V-domains. */
+export function isVdjModality(domain: Record<string, string> | undefined): boolean {
+  return domain?.[MODALITY_DOMAIN_KEY] === "vdj";
+}
+
 /**
  * Resolve receptor from a domain record: explicit `pl7.app/vdj/receptor` wins,
- * then derive from `pl7.app/vdj/chain`, else default IG.
+ * then derive from `pl7.app/vdj/chain`.
+ *
+ * With neither key present the fallback depends on the declared modality. A
+ * producer that declares `pl7.app/modality: vdj` and supplies no receptor leaves it
+ * genuinely `"unknown"` (synthetic-repertoire-profiler) — guessing IG there hides
+ * the TCR specialists. Every other input keeps the historical `IG` default, so
+ * legacy MiXCR datasets that never carried the key behave exactly as before.
  */
-export function resolveReceptor(domain: Record<string, string> | undefined): WorkflowReceptor {
+export function resolveReceptor(domain: Record<string, string> | undefined): ScopeReceptor {
   const r = domain?.["pl7.app/vdj/receptor"];
   if (r === "IG" || r === "TCRAB" || r === "TCRGD") return r;
   const chain = domain?.["pl7.app/vdj/chain"];
-  return (chain && CHAIN_TO_RECEPTOR[chain]) || "IG";
+  if (chain && CHAIN_TO_RECEPTOR[chain]) return CHAIN_TO_RECEPTOR[chain];
+  return isVdjModality(domain) ? "unknown" : "IG";
 }
 
 function isAssembling(spec: PColumnSpec): boolean {
@@ -103,10 +138,12 @@ function isAssembling(spec: PColumnSpec): boolean {
  * input axis as `pl7.app/vdj/chain` (passed in as `bulkChain`).
  */
 function deriveIsHeavy(
-  receptor: WorkflowReceptor,
+  receptor: ScopeReceptor,
   chain: "A" | "B" | "",
   bulkChain: string | undefined,
 ): boolean {
+  // Non-IG and "unknown" both fall out here: an unknown receptor carries no chain
+  // either, so heaviness is not asserted — `compat.ts` relaxes the gate instead.
   if (receptor !== "IG") return false;
   if (chain === "A") return true; // single-cell heavy
   if (chain === "B") return false; // single-cell light
@@ -122,8 +159,9 @@ function deriveIsHeavy(
  */
 export function buildScopeConfig(
   entries: SeqEntry[],
-  receptor: WorkflowReceptor,
+  receptor: ScopeReceptor,
   bulkChain?: string,
+  isVdj = false,
 ): Omit<ScopeConfig, "forAnchor"> {
   type Internal = AvailableScope & { assembling: boolean };
   const scopes: Internal[] = [];
@@ -135,16 +173,32 @@ export function buildScopeConfig(
     const d = e.spec.domain ?? {};
     const assembling = isAssembling(e.spec);
 
-    // `peptide` (peptide-profiling) and `amplicon-sequence`
-    // (synthetic-repertoire-profiler whole-variant sequence) both map to the
-    // peptide scope feature — a single AA protein sequence embedded as-is.
-    if (
-      name === "pl7.app/sequence" &&
-      (d["pl7.app/feature"] === "peptide" || d["pl7.app/feature"] === "amplicon-sequence")
-    ) {
+    // `pl7.app/sequence` covers three producers, split by feature and modality.
+    //
+    // On a VDJ run the profiler's whole-variant sequence IS the V-domain, so it maps
+    // to `VDJRegion` and its CDR3 region column to `CDR3` — that is what puts the
+    // antibody/TCR models in reach. On an amplicon run the same whole-variant column
+    // is a flat protein sequence and maps to `peptide`, as does peptide-extraction's.
+    //
+    // `isHeavy` stays false throughout: the profiler declares no chain, so the
+    // heavy-only specialists are reached via the relaxed unknown-receptor gate in
+    // `compat.ts`, not by asserting a chain the data does not carry.
+    if (name === "pl7.app/sequence") {
+      const feature = d["pl7.app/feature"];
+      const isWholeVariant = feature === "peptide" || feature === "amplicon-sequence";
+      let scopeFeature: SelectedScope["feature"] | undefined;
+      if (isVdj && feature === "amplicon-sequence") {
+        scopeFeature = "VDJRegion";
+      } else if (isVdj && feature === "CDR3") {
+        scopeFeature = "CDR3";
+      } else if (isWholeVariant) {
+        scopeFeature = "peptide";
+      }
+      // Region columns on a non-VDJ run, and FR1/CDR1/… generally, are not scopes.
+      if (scopeFeature === undefined) continue;
       scopes.push({
         id: e.id,
-        feature: "peptide",
+        feature: scopeFeature,
         chain: "",
         columns: [e.id],
         label: e.label,

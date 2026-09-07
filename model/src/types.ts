@@ -1,30 +1,27 @@
+import type {
+  EmbeddingModelId,
+  EmbeddingSelection,
+  Fidelity,
+  ScopeFeature,
+  ScopeReceptor,
+  SelectedScope,
+} from "@platforma-open/milaboratories.sequence-embeddings.kind";
 import type { PlRef, SUniversalPColumnId } from "@platforma-sdk/model";
 
-/** Receptor type. Same enum as sequence-properties to keep label conventions aligned. */
-export type WorkflowReceptor = "IG" | "TCRAB" | "TCRGD";
-
 /**
- * ESM-2 fidelity the user picks per card, projected into args. Default is `standard`.
- * `standard` → ESM-2 150M; `high` → ESM-2 650M. Only meaningful when the card's
- * model is ESM-2; ignored for the single-checkpoint specialists.
+ * The init-params contract's types live in the kind package, which owns the
+ * contract a project template serializes. They are re-exported here so every
+ * existing `./types` import keeps working and there is only one definition.
  */
-export type Fidelity = "high" | "standard";
-
-/**
- * User-facing embedding-model choice — the value of a card's model dropdown. A
- * logical id; the workflow maps it (plus `Fidelity` for ESM-2) to a concrete
- * checkpoint `ModelTag`. The catalog and scope↔model compatibility live in
- * `compat.ts`.
- */
-export type EmbeddingModelId =
-  | "esm2"
-  | "ablang2"
-  | "currab"
-  | "vhhbert"
-  | "h3berta"
-  | "tcr-bert"
-  | "peptideclm2"
-  | "sceptr"; // pass 2 — gated off in compat.ts until its input path lands
+export type {
+  EmbeddingModelId,
+  EmbeddingSelection,
+  Fidelity,
+  ScopeFeature,
+  ScopeReceptor,
+  SelectedScope,
+  WorkflowReceptor,
+} from "@platforma-open/milaboratories.sequence-embeddings.kind";
 
 /**
  * Checkpoint tag emitted on the `pl7.app/embedding/model` domain of every output
@@ -41,35 +38,6 @@ export type ModelTag =
   | "tcr-bert"
   | "peptideclm2"
   | "sceptr";
-
-/** Embedding scope feature. `Fv` and `scFv` span/merge chains and carry no `chain`. */
-export type ScopeFeature = "peptide" | "CDR3" | "VDJRegion" | "Fv" | "scFv";
-
-/**
- * One embedding scope the user can select. `columns` carries the workflow-
- * resolvable `SUniversalPColumnId`(s) of the sequence column(s) to embed — one
- * for single-chain scopes, two (`[VH, VL]`) for the paired Fv scope. The column
- * ids (and `isHeavy`/`receptor`) are snapshotted into `BlockData` on the user's
- * gesture (the anchored-id storage pattern), so the args lambda stays `data`-only.
- */
-export type SelectedScope = {
-  /** Stable picker key. The sequence column id for single scopes; `"Fv"` for paired Fv. */
-  id: string;
-  feature: ScopeFeature;
-  chain: "A" | "B" | "";
-  columns: SUniversalPColumnId[];
-  // Display label, snapshotted from the picker option.
-  label: string;
-  /**
-   * True when this is an IG heavy chain (single-cell chain `A`, or bulk
-   * `IGHeavy`). Gates the heavy-only specialists (VHHBERT, H3BERTa) and the
-   * VHH-vs-mAb default. Snapshotted so the args lambda stays `data`-only.
-   */
-  isHeavy: boolean;
-  /** Receptor of the input this scope came from, snapshotted for `data`-only
-   *  compatibility validation in the args lambda. */
-  receptor: WorkflowReceptor;
-};
 
 /** A selectable scope. Alias of `SelectedScope` — the label lives on the base type. */
 export type AvailableScope = SelectedScope;
@@ -101,28 +69,15 @@ export type ScopeConfig = {
    * previous input is never applied to the newly selected one.
    */
   forAnchor: string;
-  /** Input receptor — feeds the UI's model-compatibility filtering (`compat.ts`). */
-  receptor: WorkflowReceptor;
+  /** Input receptor — feeds the UI's model-compatibility filtering (`compat.ts`).
+   *  `"unknown"` relaxes that filtering; see `ScopeReceptor`. */
+  receptor: ScopeReceptor;
   /**
    * True when the IG input is conventional paired antibody (a light chain or Fv
    * is present), false for a heavy-only (nanobody-like) dataset. Drives the
    * VHHBERT-vs-CurrAb default in `recommendedModel`.
    */
   paired: boolean;
-};
-
-/**
- * The single (sequence scope, model) selection the user assembles. `scope` and
- * `model` are each undefined until picked — the UI fills one and bidirectionally
- * filters the other. `fidelity` applies only when `model` is ESM-2. Always present
- * in `BlockData` (initialised to `{}`); the args lambda wraps it into the workflow's
- * 1-element task list, so the workflow's list contract is unchanged.
- */
-export type EmbeddingSelection = {
-  scope?: SelectedScope;
-  model?: EmbeddingModelId;
-  /** ESM-2 fidelity; ignored for other models. */
-  fidelity?: Fidelity;
 };
 
 /**

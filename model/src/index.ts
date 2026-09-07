@@ -1,8 +1,9 @@
 import type { InferOutputsType } from "@platforma-sdk/model";
 import { BlockModelV3, PColumnCollection } from "@platforma-sdk/model";
+import { kind } from "@platforma-open/milaboratories.sequence-embeddings.kind";
 import { EMBEDDING_MODELS, isCompatible } from "./compat";
 import { blockDataModel } from "./dataModel";
-import { buildScopeConfig, resolveReceptor, SEQUENCE_SELECTORS } from "./scopes";
+import { buildScopeConfig, isVdjModality, resolveReceptor, SEQUENCE_SELECTORS } from "./scopes";
 import type { BlockArgs, EmbeddingTask, ScopeConfig, WorkflowStats } from "./types";
 
 export { blockDataModel } from "./dataModel";
@@ -22,6 +23,7 @@ export type {
   ModelTag,
   ScopeConfig,
   ScopeFeature,
+  ScopeReceptor,
   SelectedScope,
   WorkflowReceptor,
   WorkflowScopeStats,
@@ -60,7 +62,7 @@ const inputAnchorSpecs = [
   },
 ];
 
-export const platforma = BlockModelV3.create(blockDataModel)
+export const platforma = BlockModelV3.create({ dataModel: blockDataModel, kind })
   .args<BlockArgs>((data) => {
     if (data.inputAnchor === undefined) {
       throw new Error("Select an input dataset");
@@ -94,6 +96,13 @@ export const platforma = BlockModelV3.create(blockDataModel)
   // Prerun feeds a lightweight always-rerun template that reports whether the
   // backend advertises a GPU
   .prerunArgs(() => ({}))
+  // The inverse of `init`: the two fields a template seeds are projected back out
+  // unchanged. Live state travels as-is — a half-picked selection is ordinary
+  // state, and the kind's parser accepts it.
+  .templateParams((data) => ({
+    inputAnchor: data.inputAnchor,
+    embedding: data.embedding,
+  }))
   // Dropdown source for the input picker. Refs returned here populate the UI
   // selector; the user's pick is written back into `data.inputAnchor`.
   .output("inputOptions", (ctx) => ctx.resultPool.getOptions(inputAnchorSpecs))
@@ -114,6 +123,11 @@ export const platforma = BlockModelV3.create(blockDataModel)
       // Bulk single-chain inputs carry heavy/light on the input axis (not on a
       // per-chain key); pass it through so scopes get the right `isHeavy`.
       const bulkChain = spec.axesSpec[1]?.domain?.["pl7.app/vdj/chain"];
+      // Producer-declared modality. On a VDJ run the profiler's whole-variant and
+      // CDR3 columns are V-domain scopes, not peptide ones — which is what makes the
+      // antibody/TCR models reachable. Absent on pre-declaration projects, which
+      // therefore keep the peptide classification they have today.
+      const isVdj = isVdjModality(spec.axesSpec[1]?.domain);
       const entries = new PColumnCollection()
         .addColumnProvider(ctx.resultPool)
         .addAxisLabelProvider(ctx.resultPool)
@@ -129,6 +143,7 @@ export const platforma = BlockModelV3.create(blockDataModel)
           entries.map((e) => ({ id: e.id, spec: e.spec, label: e.label })),
           receptor,
           bulkChain,
+          isVdj,
         ),
         // Stamp the anchor this config belongs to, so the UI seed watcher can
         // reject a retained (stale) config from the previous input.
