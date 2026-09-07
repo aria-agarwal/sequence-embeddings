@@ -1,5 +1,13 @@
 # @platforma-open/milaboratories.sequence-embeddings.ui
 
+## 1.2.4
+
+### Patch Changes
+
+- Updated dependencies [c2fffd2]
+- Updated dependencies [0a3a196]
+  - @platforma-open/milaboratories.sequence-embeddings.model@1.2.4
+
 ## 1.2.3
 
 ### Patch Changes
