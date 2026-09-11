@@ -1,5 +1,11 @@
 # @platforma-open/milaboratories.sequence-embeddings
 
+## 1.4.3
+
+### Patch Changes
+
+- 5f59014: Raise the SDK catalog to latest.
+
 ## 1.4.2
 
 ### Patch Changes
