@@ -43,7 +43,7 @@
       "ui": "@platforma-open/milaboratories.sequence-embeddings.ui/dist"
     },
     "meta": {
-      "title": "Sequence Embeddings",
+      "title": "Sequence Embeddings- Aria",
       "logo": "file:../logos/block-logo.png",
       "url": "https://github.com/platforma-open/sequence-embeddings",
       "support": "mailto:support@milaboratories.com",
