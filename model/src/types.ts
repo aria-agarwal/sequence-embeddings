@@ -37,6 +37,7 @@ export type ModelTag =
   | "h3berta"
   | "tcr-bert"
   | "peptideclm2"
+  | "esmc"
   | "sceptr";
 
 /** A selectable scope. Alias of `SelectedScope` — the label lives on the base type. */

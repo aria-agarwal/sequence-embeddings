@@ -44,6 +44,7 @@ MODELS := {
 	"h3berta": { dim: 768, label: "H3BERTa", inputKind: "aa-cdr3-trimmed", family: "hf", pairMode: "concat", embLayer: -1, poolSpecials: true, maxLength: 100 },
 	"tcr-bert": { dim: 768, label: "TCR-BERT", inputKind: "aa-spaced", family: "hf", pairMode: "concat", embLayer: 8, poolSpecials: false, maxLength: 64 },
 	"peptideclm2": { dim: 1024, label: "PeptideCLM-2", inputKind: "smiles", family: "hf-custom", pairMode: "concat", embLayer: -2, poolSpecials: false, maxLength: 2048 },
+	"esmc": { dim: 960, label: "ESM Cambrian", inputKind: "aa", family: "hf-custom", pairMode: "concat", embLayer: -1, poolSpecials: false, maxLength: 1024 },
 	// AbLang2: rotary, NO hard cap; seqcoding ignores --max-length. Set far above any
 	// conceivable input (effectively unbounded) so AbLang2 (which never truncates) is
 	// never falsely counted as truncated.

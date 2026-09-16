@@ -56,6 +56,7 @@ const EMBEDDING_MODEL_IDS = [
   "h3berta",
   "tcr-bert",
   "peptideclm2",
+  "esmc",
   "sceptr",
 ] as const;
 

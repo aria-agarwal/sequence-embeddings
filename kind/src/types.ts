@@ -51,6 +51,7 @@ export type EmbeddingModelId =
   | "h3berta"
   | "tcr-bert"
   | "peptideclm2"
+  | "esmc"
   | "sceptr"; // pass 2 — gated off in compat.ts until its input path lands
 
 /** Embedding scope feature. `Fv` and `scFv` span/merge chains and carry no `chain`. */

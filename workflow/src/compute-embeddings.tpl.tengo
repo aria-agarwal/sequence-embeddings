@@ -65,6 +65,8 @@ self.body(func(inputs) {
 		modelAsset = assets.importAsset("@platforma-open/milaboratories.protein-embeddings-assets:tcr-bert")
 	} else if modelTag == "peptideclm2" {
 		modelAsset = assets.importAsset("@platforma-open/milaboratories.protein-embeddings-assets:peptideclm-2")
+	} else if modelTag == "esmc" {
+		modelAsset = assets.importAsset("@platforma-open/milaboratories.protein-embeddings-assets:esmc-600M")
 	} else if modelTag == "ablang2" {
 		modelAsset = assets.importAsset("@platforma-open/milaboratories.protein-embeddings-assets:ablang2")
 	} else {

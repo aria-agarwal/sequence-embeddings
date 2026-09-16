@@ -65,6 +65,7 @@ const ENABLED_MODELS = new Set<EmbeddingModelId>([
   "h3berta",
   "tcr-bert",
   "peptideclm2",
+  "esmc",
   "ablang2",
 ]);
 
@@ -121,6 +122,13 @@ export const EMBEDDING_MODELS: Record<EmbeddingModelId, EmbeddingModelSpec> = {
     features: ["peptide"],
     priority: 50, // peptide default, per product decision (re-evaluate after testing)
   },
+  esmc: {
+    id: "esmc",
+    label: "ESM Cambrian (universal)",
+    receptors: ["IG", "TCRAB", "TCRGD"],
+    features: ["peptide", "CDR3", "VDJRegion", "Fv", "scFv"],
+    priority: 5,
+  },
   sceptr: {
     id: "sceptr",
     label: "SCEPTR (paired αβ)",
@@ -147,6 +155,7 @@ export const MODEL_TAG_LABELS: Record<ModelTag, string> = {
   h3berta: "H3BERTa",
   "tcr-bert": "TCR-BERT",
   peptideclm2: "PeptideCLM-2",
+  esmc: "ESM Cambrian",
   sceptr: "SCEPTR",
 };
 
