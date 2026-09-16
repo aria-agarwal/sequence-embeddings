@@ -15,9 +15,6 @@ catalogs:
     '@milaboratories/ts-configs':
       specifier: 1.4.0
       version: 1.4.0
-    '@platforma-open/milaboratories.protein-embeddings-assets':
-      specifier: 1.2.0
-      version: 1.2.0
     '@platforma-open/milaboratories.runenv-python-3':
       specifier: 1.10.7
       version: 1.10.7
@@ -242,8 +239,8 @@ importers:
   workflow:
     dependencies:
       '@platforma-open/milaboratories.protein-embeddings-assets':
-        specifier: 'catalog:'
-        version: 1.2.0
+        specifier: link:../../assets-protein-embeddings/catalogue
+        version: link:../../assets-protein-embeddings/catalogue
       '@platforma-open/milaboratories.sequence-embeddings.software':
         specifier: workspace:*
         version: link:../software
@@ -1661,33 +1658,6 @@ packages:
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.ablang2@1.1.0':
-    resolution: {integrity: sha512-obCVSeJul/dwz2zJJ621Sb+eBdXPhnzhp4fYCiQ1vhUxoioQfnndY+fek2rznePBRSOP7hwfu4nuVEr1X9xnTg==}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.currab@1.1.0':
-    resolution: {integrity: sha512-WiTBaOJT86gftrOiA0g8fFkjN/h+Lkex/IjRdtu9S9Re1Tu5IZSauHme4eGF9EUqUWtReUz7YSR0u7VE9BexJg==}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.esm2-150m@1.1.0':
-    resolution: {integrity: sha512-W0qLfueyCw6FGHOc+snHJ+8F6n4hRqdDUcmctBKYK6xvpN+1WSerVhCUY0wwcIfUiOMTJ9Ff3/Aye6RX09rjbQ==}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.esm2-650m@1.1.0':
-    resolution: {integrity: sha512-DMroa9n9A9pQ0sAUjN5x/9fxtI6kipkmGJYuz62GIn3xIlAUOq9cLjWAcegZTJhyZni2/jtPl/7P1TTwlX9TKA==}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.h3berta@1.1.0':
-    resolution: {integrity: sha512-VX5+y87lxaFDHSlym+itl6JxByzQGqm2eX+F8w9eJ48q032IhFV6APntKxghDwhWNvVQodNhR54SubhuD4yG4g==}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.peptideclm-2@1.1.0':
-    resolution: {integrity: sha512-DOhfMxzipLapxXqQ6aXUJl/g4LiIGHGwlS+NqSoJADWYgyJUzqizC4yRcC2qeuP9UMGtVU3ef/cifvFi/7tg+w==}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.tcr-bert@1.1.0':
-    resolution: {integrity: sha512-JJRVJvQu/4yT5o35St7CnMFH+F7KbnZCD9m9ZG9mAvndvqjxndARld3jxBaZA/zk99hHepvwoVsHgAkk/0R2NQ==}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.vhhbert@1.1.0':
-    resolution: {integrity: sha512-4vqiYWhqFvpBww+WzXMeK6sOj7ZqxuRtuL+1CYGRPOsifjx6sjkulh+dd/nsiy05ZZfix68SGbqNXedmTIBYmw==}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets@1.2.0':
-    resolution: {integrity: sha512-7ihOaW2AVVXYiMFL2OXI0GkLAb4hrh6BVbp0UZoJ4ISeL2xM/XBN0pKWPMnzkShjeIR2p83bMUvwu4dv/9NrZA==}
 
   '@platforma-open/milaboratories.runenv-python-3.12.10-atls@1.2.7':
     resolution: {integrity: sha512-vJiU68NKgyupW5meeWB/pZZ8y5wewPV6/EcRQ2BwUhSyikDQrn83XzBlc/nTu9UmbYmBqQTrt59x0qKtcC0ILw==}
@@ -7225,33 +7195,6 @@ snapshots:
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.ablang2@1.1.0': {}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.currab@1.1.0': {}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.esm2-150m@1.1.0': {}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.esm2-650m@1.1.0': {}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.h3berta@1.1.0': {}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.peptideclm-2@1.1.0': {}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.tcr-bert@1.1.0': {}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets.vhhbert@1.1.0': {}
-
-  '@platforma-open/milaboratories.protein-embeddings-assets@1.2.0':
-    dependencies:
-      '@platforma-open/milaboratories.protein-embeddings-assets.ablang2': 1.1.0
-      '@platforma-open/milaboratories.protein-embeddings-assets.currab': 1.1.0
-      '@platforma-open/milaboratories.protein-embeddings-assets.esm2-150m': 1.1.0
-      '@platforma-open/milaboratories.protein-embeddings-assets.esm2-650m': 1.1.0
-      '@platforma-open/milaboratories.protein-embeddings-assets.h3berta': 1.1.0
-      '@platforma-open/milaboratories.protein-embeddings-assets.peptideclm-2': 1.1.0
-      '@platforma-open/milaboratories.protein-embeddings-assets.tcr-bert': 1.1.0
-      '@platforma-open/milaboratories.protein-embeddings-assets.vhhbert': 1.1.0
 
   '@platforma-open/milaboratories.runenv-python-3.12.10-atls@1.2.7': {}
 

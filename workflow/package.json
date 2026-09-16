@@ -10,7 +10,7 @@
     "check": "pl-tengo check"
   },
   "dependencies": {
-    "@platforma-open/milaboratories.protein-embeddings-assets": "catalog:",
+    "@platforma-open/milaboratories.protein-embeddings-assets": "link:../../assets-protein-embeddings/catalogue",
     "@platforma-open/milaboratories.sequence-embeddings.software": "workspace:*",
     "@platforma-sdk/workflow-tengo": "catalog:"
   },
